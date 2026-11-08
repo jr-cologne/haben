@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { NodeCompiler } from "@myriaddreamin/typst-ts-node-compiler";
 import { accountHolder, countryName, formatIban, paymentSentence, referenceMeta } from "./format.ts";
 import { texts, TEXTS, type Texts } from "./i18n.ts";
+import { fillInvoiceTexts } from "./platzhalter.ts";
 import { girocodeSvg } from "./qr.ts";
 import {
   accentPalette,
@@ -223,7 +224,8 @@ export function draftFilename(title: string, date: string, t: Pick<Texts, "draft
  */
 export function renderInvoiceDraftPdf(doc: Omit<InvoiceDocument, "number">): DraftPdf {
   const t = texts(doc.language, doc.currency);
-  const data = pdfData({ ...doc, number: t.draft.mark });
+  // Platzhalter wie {faellig} zeigt der Entwurf schon ersetzt, {nummer} als „ENTWURF“
+  const data = pdfData(fillInvoiceTexts({ ...doc, number: t.draft.mark }));
   return { pdf: compilePdf(TEMPLATE, asDraft(data, t), doc.issueDate, "Entwurfs-PDF", doc), filename: draftFilename(data.title, doc.issueDate, t) };
 }
 

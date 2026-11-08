@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useState, type FormEvent } from "react";
 import { errorMessage } from "../../../lib/format.ts";
 import { NoticeBanner } from "../../../components/NoticeBanner.tsx";
+import { PlaceholderHelp } from "../../../components/PlaceholderHelp.tsx";
 import type { Notice } from "../../../lib/use-action.ts";
 import { archiveTextBlock, getTextBlocks, saveTextBlock } from "../../../server/functions/text-blocks.ts";
 
@@ -75,6 +76,9 @@ function TextBlockForm({ block, contacts, onDone }: { block: Block | null; conta
             In wiederkehrenden Rechnungen gelten auch hier Platzhalter wie {"{monat}"} oder {"{zeitraum}"}.
           </span>
         </label>
+        <div style={{ gridColumn: "1 / -1" }}>
+          <PlaceholderHelp kinds={["rechnung", "angebot"]} />
+        </div>
         <label className="field" style={{ gridColumn: "1 / -1" }}>
           Kunde (optional)
           <select name="contactId" defaultValue={block?.contactId ?? ""}>

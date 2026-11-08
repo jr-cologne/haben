@@ -55,6 +55,7 @@ import type { SavedContact } from "./ContactForm.tsx";
 import { PreviewButton, PreviewLayout, useDocumentPreview } from "./DocumentPreview.tsx";
 import { Icon } from "./Icon.tsx";
 import { InvoicePreview, type PreviewSeller } from "./InvoicePreview.tsx";
+import { PlaceholderHelp } from "./PlaceholderHelp.tsx";
 import { LineAmount, LineCell } from "./LineCell.tsx";
 import { LineKind } from "./LineKind.tsx";
 import { OrderReferenceFields, orderReferenceValues } from "./OrderReferenceFields.tsx";
@@ -718,6 +719,7 @@ export function InvoiceEditor({
             number={nextNumber}
             issueDate={issueDate || initial.issueDate}
             dueDate={dueDate}
+            paymentTermDays={termValid ? term : 0}
             validUntil={quote ? validUntil || null : null}
             serviceFrom={serviceFrom || null}
             serviceTo={serviceTo || null}
@@ -1282,6 +1284,7 @@ export function InvoiceEditor({
               blocks={textBlocks}
               contactId={contactId || null}
             />
+            <PlaceholderHelp kinds={[quote ? "angebot" : "rechnung"]} texts={{ Einleitung: intro, Hinweis: note }} />
           </section>
 
           {quote && (

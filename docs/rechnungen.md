@@ -141,9 +141,32 @@ Unter **Textbausteine** (Seitenleiste, Bereich Verkauf) legst du Kopf- und Fußt
 - In Rechnung, Angebot und wiederkehrender Rechnung fügt **Textbaustein einfügen** den Text in die Einleitung bzw. den Hinweis ein. Ist das Feld leer, steht danach genau der Baustein darin, sonst kommt er als neuer Absatz dazu.
 - Eingefügt wird eine **Kopie**: Du kannst sie im Beleg noch anpassen, und spätere Änderungen am Baustein ändern keine geschriebene Rechnung. Einleitung und Hinweis gehören zur festgeschriebenen Rechnung und stehen mit im Siegel.
 - Im XML stehen Einleitung und Hinweis als Freitext zur Rechnung (BT-22), die Einleitung zuerst.
-- In wiederkehrenden Rechnungen gelten in der Einleitung dieselben Platzhalter wie in Beschreibung und Hinweis.
+- In Einleitung und Hinweis ersetzt Haben [Platzhalter](#platzhalter-in-einleitung-und-hinweis) wie `{faellig}` oder `{datum+7d}`, in wiederkehrenden Rechnungen außerdem die für [wiederkehrende Rechnungen](#wiederkehrende-rechnungen) wie `{monat}`.
 - Aus einem Angebot übernimmt die Rechnung die Einleitung des Angebots.
 - Nicht mehr gebrauchte Bausteine archivierst du; sie lassen sich wiederherstellen. Jede Änderung steht im Änderungsprotokoll.
+
+#### Platzhalter in Einleitung und Hinweis
+
+In der Einleitung und im Hinweis von Rechnung und Angebot, also auch in Textbausteinen und der Standard-Einleitung aus den Firmendaten, kannst du Platzhalter schreiben. Haben setzt dafür die Daten des Belegs ein, etwa „Die Rechnung ist bis zum {faellig} zu begleichen.“ → „Die Rechnung ist bis zum 06.12.2026 zu begleichen.“ Die Namen sind dieselben wie in den [E-Mail-Vorlagen](#per-e-mail-versenden).
+
+| Platzhalter | Wird zu | Rechnung | Angebot |
+| --- | --- | --- | --- |
+| `{datum}` | Rechnungs- bzw. Angebotsdatum | ✓ | ✓ |
+| `{faellig}` | Fälligkeitsdatum (Rechnungsdatum plus Zahlungsziel, siehe [Fälligkeit](#fälligkeit)) | ✓ | – |
+| `{zahlungsziel}` | Zahlungsziel in Tagen, z. B. `28` | ✓ | – |
+| `{gueltig}` | Gültig bis | – | ✓ |
+| `{leistungsbeginn}`, `{leistungsende}` | Beginn und Ende des Leistungszeitraums; mit nur einem Leistungsdatum beide dieses, ohne Angabe das Belegdatum | ✓ | ✓ |
+| `{nummer}` | Rechnungs- bzw. Angebotsnummer; in Vorschau und Entwurfs-PDF die voraussichtliche Nummer bzw. „ENTWURF“ | ✓ | ✓ |
+| `{betrag}` | Gesamtbetrag brutto in der Währung des Belegs | ✓ | ✓ |
+| `{kunde}`, `{kundennummer}` | Name und Kundennummer des Kunden (leer ohne Kundennummer) | ✓ | ✓ |
+| `{firma}` | Name deiner Firma | ✓ | ✓ |
+
+**Mit Daten rechnen:** Hinter einem Datum steht ein Versatz mit `+` oder `-`, eine Zahl und die Einheit `d` (Tage, auch `t` oder ohne Einheit), `w` (Wochen) oder `m` (Monate). `{datum+7d}` ist das Rechnungsdatum plus sieben Tage, `{faellig-3d}` drei Tage vor der Fälligkeit, `{datum+1m}` einen Monat später; am Monatsende gekappt, aus dem 31. Januar wird so der 28. bzw. 29. Februar. Groß- und Kleinschreibung ist egal.
+
+- **Im Entwurf** bleibt der Platzhalter stehen, damit er einem geänderten Datum oder Zahlungsziel folgt. Die [Vorschau](#vorschau) und das [Entwurfs-PDF](#entwurf-als-pdf) zeigen den fertigen Text.
+- **Beim Festschreiben** schreibt Haben den fertigen Text in den Beleg; so steht er im PDF, im XML (BT-22) und im Siegel. Kopierst du den Beleg später, enthält die Kopie den fertigen Text, nicht die Platzhalter.
+- **Unbekannte Platzhalter** wie ein Tippfehler `{fälig}` oder `{faellig}` im Angebot zeigt der Editor unter dem Hinweis an; festschreiben lässt sich der Beleg erst, wenn sie korrigiert sind. Ein Versatz geht nur an Daten, `{nummer+1d}` ist also unbekannt.
+- Datum und Betrag stehen in der Sprache des Belegs, auf englischen Rechnungen also etwa „6 Dec 2026“.
 
 ### Umsatzsteuer auf der Rechnung
 
@@ -197,6 +220,7 @@ Der Editor listet alles auf, was noch fehlt. Geprüft werden:
 - Firmendaten: Name, Anschrift, E-Mail-Adresse, IBAN, Steuernummer oder USt-IdNr.
 - Kunde gewählt, mindestens eine Position, keine Position mit Betrag 0.
 - Umsatzsteuer: Außer bei „Regulär besteuert“ müssen alle Positionen 0 % haben. Reverse Charge braucht deine USt-IdNr. in den Firmendaten und die USt-IdNr. des Kunden, und der Kunde darf nicht in Deutschland sitzen. Die innergemeinschaftliche Lieferung braucht deine USt-IdNr., eine USt-IdNr. des Kunden aus einem anderen EU-Land und einen Kunden in einem anderen EU-Land. Die Ausfuhrlieferung braucht deine USt-IdNr. und einen Kunden außerhalb der EU. Bei „Leistung ins Nicht-EU-Ausland“ darf der Kunde nicht in Deutschland sitzen. „Steuerfrei nach § 4 UStG“ braucht die Befreiungsvorschrift.
+- Einleitung und Hinweis ohne unbekannte [Platzhalter](#platzhalter-in-einleitung-und-hinweis).
 - Kleinunternehmer: Bist du in den Einstellungen als Kleinunternehmer eingetragen, lässt sich nur eine Kleinunternehmer-Rechnung festschreiben; bist du es nicht, keine.
 - Eine Rechnung muss einen positiven Gesamtbetrag haben, eine Rechnungskorrektur einen negativen.
 - GmbH und UG: Fehlen Pflichtangaben nach § 35a GmbHG (Registergericht, Registernummer, Geschäftsführer), zeigt der Editor einen Hinweis. Festschreiben geht trotzdem, siehe [Pflichtangaben einer GmbH oder UG](#pflichtangaben-einer-gmbh-oder-ug).

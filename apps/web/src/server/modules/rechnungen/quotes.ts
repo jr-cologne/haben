@@ -31,9 +31,11 @@ import {
   quoteEditProblem,
   quoteInvoiceProblem,
   quoteStatus as coreQuoteStatus,
+  placeholderIssues,
+  QUOTE_TEXT_PLACEHOLDERS,
   type QuoteListStatus,
 } from "@haben/core";
-import { buildQuotePdf, texts, type QuoteDocument, type QuoteDocumentLine } from "@haben/einvoice";
+import { buildQuotePdf, fillQuoteTexts, texts, type QuoteDocument, type QuoteDocumentLine } from "@haben/einvoice";
 import { and, asc, desc, eq, or, sql } from "drizzle-orm";
 import { createHash } from "node:crypto";
 import { z } from "zod";
@@ -407,6 +409,8 @@ export async function quoteIssues(id: string): Promise<string[]> {
   if (lines.length === 0) issues.push("Keine Positionen");
   if (lines.some((line) => lineAmount(line.quantity, line.unitPrice) === 0)) issues.push("Position ohne Betrag");
   if (quote.gross <= 0) issues.push("Angebotssumme muss positiv sein");
+  // Ein Tippfehler wie {gültig} soll nicht im gesperrten Angebot stehen
+  issues.push(...placeholderIssues({ Einleitung: quote.intro, Hinweis: quote.note }, QUOTE_TEXT_PLACEHOLDERS));
   const kindProblem = quoteLineKindProblem(lines);
   if (kindProblem) issues.push(kindProblem);
   const planIssue = planProblem(quote.paymentPlan, quote.priceMode === "brutto" ? quote.gross : quote.net);
@@ -431,7 +435,8 @@ export async function finalizeQuote(actor: string, id: string): Promise<Quote> {
     const number = await documentNumber(tx, "angebot", company.quoteNumberFormat, quote.issueDate, counter);
     const seller = sellerFrom(company);
     const buyer = buyerFrom(contact!);
-    const doc = quoteDocumentFor(quote, lines, seller, buyer, number);
+    // Platzhalter wie {gueltig} ersetzen; der fertige Text wird mit festgeschrieben
+    const doc = fillQuoteTexts(quoteDocumentFor(quote, lines, seller, buyer, number));
     const pdf = buildQuotePdf({ ...doc, ...(await loadLetterhead()) });
     const now = new Date();
     await takeNumber(tx, "angebot", circle, counter);
@@ -445,6 +450,8 @@ export async function finalizeQuote(actor: string, id: string): Promise<Quote> {
         contactVersion: contact!.version,
         seller,
         buyer,
+        intro: doc.intro ?? quote.intro,
+        note: doc.note ?? quote.note,
         net: doc.totals.net,
         tax: doc.totals.tax,
         gross: doc.totals.gross,

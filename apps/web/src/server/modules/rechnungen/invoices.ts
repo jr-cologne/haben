@@ -28,6 +28,8 @@ import {
   invoiceOpen,
   type InvoiceListStatus,
   legalInfo,
+  INVOICE_TEXT_PLACEHOLDERS,
+  placeholderIssues,
   skontoProblem,
   sortSkonto,
   discountColumns,
@@ -37,7 +39,7 @@ import {
   lineDiscountProblem,
   negateDiscount,
 } from "@haben/core";
-import { buildEInvoice, texts, validateForFormat, type Buyer, type InvoiceDocument, type InvoiceFormat, type Seller } from "@haben/einvoice";
+import { buildEInvoice, fillInvoiceTexts, texts, validateForFormat, type Buyer, type InvoiceDocument, type InvoiceFormat, type Seller } from "@haben/einvoice";
 import { and, asc, desc, eq, inArray, isNull, ne, or, sql } from "drizzle-orm";
 import { createHash } from "node:crypto";
 import { z } from "zod";
@@ -900,6 +902,8 @@ export async function finalizeIssues(id: string, q: Db | Tx = db): Promise<strin
   if (!contact) issues.push("Kunde fehlt");
   if (lines.length === 0) issues.push("Keine Positionen");
   if (lines.some((line) => lineAmount(line.quantity, line.unitPrice) === 0)) issues.push("Position ohne Betrag");
+  // Ein Tippfehler wie {fälig} soll nicht auf der gesperrten Rechnung stehen
+  issues.push(...placeholderIssues({ Einleitung: invoice.intro, Hinweis: invoice.note }, INVOICE_TEXT_PLACEHOLDERS));
   if (invoice.correctsId) {
     const [original] = await q.select().from(schema.invoices).where(eq(schema.invoices.id, invoice.correctsId));
     const problem = original
@@ -1048,16 +1052,19 @@ async function finalizeDraft(tx: Tx, id: string): Promise<Invoice> {
   const seller = sellerFrom(company);
   const buyer = corrects?.buyer ?? buyerFrom(contact!);
   const totals = (await invoiceTotalsById([id], tx)).get(id)!;
-  const doc = documentFor(
-    invoice,
-    lines,
-    await invoiceDocumentTotals(id, tx),
-    totals,
-    seller,
-    buyer,
-    number,
-    corrects ? { number: corrects.number!, issueDate: corrects.issueDate } : null,
-    await deductedRefs(lines, tx),
+  // Platzhalter wie {faellig} mit Nummer und Daten der Rechnung ersetzen; der fertige Text wird mit festgeschrieben
+  const doc = fillInvoiceTexts(
+    documentFor(
+      invoice,
+      lines,
+      await invoiceDocumentTotals(id, tx),
+      totals,
+      seller,
+      buyer,
+      number,
+      corrects ? { number: corrects.number!, issueDate: corrects.issueDate } : null,
+      await deductedRefs(lines, tx),
+    ),
   );
   const rendered = await buildEInvoice({ ...doc, ...(await loadLetterhead()) });
   const now = new Date();
@@ -1073,6 +1080,8 @@ async function finalizeDraft(tx: Tx, id: string): Promise<Invoice> {
       contactVersion: contact!.version,
       seller,
       buyer,
+      intro: doc.intro ?? invoice.intro,
+      note: doc.note ?? invoice.note,
       net: totals.net,
       tax: totals.tax,
       gross: totals.gross,

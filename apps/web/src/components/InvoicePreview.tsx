@@ -9,9 +9,12 @@ import {
   formatPercent,
   formatQuantity,
   formatRate,
+  fillTextPlaceholders,
+  invoiceTextValues,
   lineAmount,
   lineDiscountAmount,
   planShareLabel,
+  quoteTextValues,
   skontoFristen,
   type Discount,
   type InvoiceLineInput,
@@ -80,6 +83,7 @@ export function InvoicePreview({
   number,
   issueDate,
   dueDate,
+  paymentTermDays = 0,
   validUntil = null,
   serviceFrom,
   serviceTo,
@@ -101,6 +105,8 @@ export function InvoicePreview({
   number: string;
   issueDate: string;
   dueDate: string;
+  /** Zahlungsziel in Tagen, für den Platzhalter {zahlungsziel} */
+  paymentTermDays?: number;
   /** Nur beim Angebot */
   validUntil?: string | null;
   serviceFrom: string | null;
@@ -140,6 +146,19 @@ export function InvoicePreview({
   const subtotal = counted.reduce((s, l) => s + discountedLineAmount(l), 0);
   const positions = valid.map((l, i) => ({ position: i + 1, kind: l.kind ?? null }));
   const quote = kind === "angebot";
+  // Platzhalter wie {faellig} oder {datum+7d} wie im PDF ersetzen (packages/core/src/text-placeholders.ts)
+  const common = {
+    issueDate,
+    serviceFrom,
+    serviceTo,
+    number,
+    amount: money(totals.gross),
+    customer: buyer?.name ?? "",
+    customerNumber: buyer?.kundennummer ?? "",
+    company: seller.name,
+  };
+  const textValues = quote ? quoteTextValues({ ...common, validUntil: validUntil ?? issueDate }) : invoiceTextValues({ ...common, dueDate, paymentTermDays });
+  const filled = (text: string) => fillTextPlaceholders(text, textValues, formatDate);
   const sender = [seller.name, seller.strasse, `${seller.plz} ${seller.ort}`.trim()].filter(Boolean).join(" · ");
   const meta: [string, string][] = [
     [quote ? "Angebotsnummer" : "Rechnungsnummer", number],
@@ -221,7 +240,7 @@ export function InvoicePreview({
               zur Rechnung {corrects.number} vom {formatDate(corrects.issueDate)}
             </div>
           )}
-          {intro.trim() && <p style={{ whiteSpace: "pre-wrap" }}>{intro.trim()}</p>}
+          {intro.trim() && <p style={{ whiteSpace: "pre-wrap" }}>{filled(intro.trim())}</p>}
           <table className="sheet-table">
             <thead>
               <tr>
@@ -341,7 +360,7 @@ export function InvoicePreview({
           )}
           {taxNote && <p className="sheet-strong">{taxNote}</p>}
           <p>{payment}</p>
-          {note && <p style={{ whiteSpace: "pre-wrap" }}>{note}</p>}
+          {note && <p style={{ whiteSpace: "pre-wrap" }}>{filled(note)}</p>}
         </div>
         <div className="sheet-foot">
           {footer.map((column, index) => (

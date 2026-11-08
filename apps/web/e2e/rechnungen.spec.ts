@@ -211,6 +211,37 @@ test("Textbausteine: Kopftext für einen Kunden anlegen und im Rechnungseditor e
   await expect(insert).toHaveValue("");
 });
 
+test("Platzhalter: Fußtext mit {faellig} und {datum+7d}, die Vorschau rechnet mit, Tippfehler werden gemeldet", async () => {
+  await go("/textbausteine");
+  await page.getByRole("button", { name: "Neuer Textbaustein" }).click();
+  const form = page.getByRole("form", { name: "Neuer Textbaustein" });
+  await form.getByLabel("Bezeichnung").fill("Zahlungsziel mit Ratenzahlung");
+  await form.getByLabel("Art").selectOption("fuss");
+  await form.getByText("Platzhalter wie {faellig} oder {datum+7d}").click();
+  await expect(form).toContainText("{gueltig} Gültig bis (nur Angebot)");
+  await form
+    .getByRole("textbox", { name: /^Text / })
+    .fill("Zahlbar innerhalb von {zahlungsziel} Tagen bis zum {faellig}. Vereinbarung bis zum {datum+7d} zurück.");
+  await form.getByRole("button", { name: "Anlegen" }).click();
+  await expect(page.getByRole("region", { name: "Textbausteine" })).toContainText("Zahlungsziel mit Ratenzahlung");
+
+  await go("/rechnungen/neu");
+  await page.getByLabel("Kunde").selectOption({ label: "Nordwerk Software GmbH · Hamburg" });
+  await page.getByLabel("Rechnungsdatum").fill("2026-11-02");
+  await page.getByLabel("Zahlungsziel in Tagen").fill("28");
+  await page.getByLabel("Fußtext aus den Textbausteinen einfügen").selectOption({ label: "Zahlungsziel mit Ratenzahlung" });
+  // Im Feld bleibt der Platzhalter, die Vorschau zeigt den fertigen Text; die Fälligkeit 30.11.2026 ist ein Montag
+  const hinweis = page.getByLabel("Hinweis auf der Rechnung (optional)");
+  await expect(hinweis).toHaveValue(/\{faellig\}/);
+  const vorschau = page.getByLabel("Vorschau der Rechnung");
+  await expect(vorschau).toContainText("Zahlbar innerhalb von 28 Tagen bis zum 30.11.2026. Vereinbarung bis zum 09.11.2026 zurück.");
+  await page.getByLabel("Zahlungsziel in Tagen").fill("14");
+  await expect(vorschau).toContainText("Zahlbar innerhalb von 14 Tagen bis zum 16.11.2026.");
+
+  await hinweis.fill("Bis zum {fälig}.");
+  await expect(page.getByRole("status").filter({ hasText: "Hinweis: unbekannter Platzhalter {fälig}" })).toBeVisible();
+});
+
 test("Standard-Einleitung: in den Firmendaten hinterlegt, je für Rechnungen und Angebote vorbelegt und änderbar", async () => {
   const firma = page.getByRole("form", { name: "Firmendaten" });
   const speichern = async () => {

@@ -10,6 +10,7 @@ export { buildLstbAusdruckPdf, lstbAusdruckPdfData, type LstbAusdruckDocument } 
 export { buildDunningDraftPdf, buildDunningPdf, dunningPdfData, type DunningDocument } from "./dunning.ts";
 export { buildHinterlegungPdf, hinterlegungPdfData } from "./hinterlegung.ts";
 export { buildEInvoice } from "./xml.ts";
+export { fillInvoiceTexts, fillQuoteTexts } from "./platzhalter.ts";
 export { validateForFormat } from "./validate.ts";
 export { extractFacturXXml } from "./zugferd.ts";
 export { extractEmbeddedXml } from "./embedded.ts";
