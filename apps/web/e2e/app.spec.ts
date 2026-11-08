@@ -35,6 +35,12 @@ test("Einrichtung: Konto, Firmendaten und Rechnungsnummer", async () => {
   await einrichten(page);
   const firma = page.getByRole("form", { name: "Firmendaten" });
 
+  // Website für den Fuß der Rechnung: Unsinn lehnt Haben ab, eine Adresse ohne https:// bleibt wie eingegeben
+  await firma.getByLabel(/^Website/).fill("keine Adresse");
+  await firma.getByRole("button", { name: "Speichern" }).click();
+  await expect(page.getByText(/Website: keine gültige Webadresse/)).toBeVisible();
+  await firma.getByLabel(/^Website/).fill("mustermann.example");
+
   // Kontoinhaber bleibt gespeichert und lässt sich wieder leeren (dann gilt der Firmenname)
   await firma.getByLabel("Kontoinhaber").fill("Max Mustermann");
   await firma.getByRole("button", { name: "Speichern" }).click();
@@ -42,7 +48,10 @@ test("Einrichtung: Konto, Firmendaten und Rechnungsnummer", async () => {
   // Die Meldung steht noch vom ersten Speichern da; erst wenn die Anfrage durch ist, neu laden
   await page.waitForLoadState("networkidle");
   await page.reload();
+  // Erst nach der Hydrierung klicken, sonst schickt der Browser das Formular selbst per GET ab
+  await page.waitForLoadState("networkidle");
   await expect(firma.getByLabel("Kontoinhaber")).toHaveValue("Max Mustermann");
+  await expect(firma.getByLabel(/^Website/)).toHaveValue("mustermann.example");
   await firma.getByLabel("Kontoinhaber").fill("");
   await firma.getByRole("button", { name: "Speichern" }).click();
   await expect(page.getByText("Firmendaten gespeichert.")).toBeVisible();

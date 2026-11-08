@@ -110,6 +110,8 @@ export const company = pgTable(
     bundesland: bundeslandEnum("bundesland"),
     versteuerung: versteuerungEnum("versteuerung").notNull().default("ist"),
     telefon: text("telefon").notNull().default(""),
+    /** Website im Fuß von Rechnung und Angebot (Kontaktspalte); leer = keine */
+    website: text("website").notNull().default(""),
     bank: text("bank").notNull().default(""),
     iban: text("iban").notNull().default(""),
     bic: text("bic").notNull().default(""),

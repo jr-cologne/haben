@@ -21,6 +21,8 @@ export interface Seller extends Address {
   name: string;
   email: string;
   telefon?: string;
+  /** Website, z. B. „https://example.com“; nur im Fuß des PDFs, EN 16931 hat dafür kein Feld */
+  website?: string;
   steuernummer?: string;
   ustId?: string;
   iban?: string;

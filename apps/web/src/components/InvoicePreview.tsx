@@ -29,6 +29,9 @@ export interface PreviewSeller {
   plz: string;
   ort: string;
   email: string;
+  telefon?: string;
+  /** Leer = keine */
+  website?: string;
   steuernummer: string;
   ustId: string;
   iban: string;
@@ -170,7 +173,14 @@ export function InvoicePreview({
             ),
           ].join(" ");
   const footer = [
-    [seller.name || "[Firmenname]", seller.strasse, `${seller.plz} ${seller.ort}`.trim(), seller.email],
+    [
+      seller.name || "[Firmenname]",
+      seller.strasse,
+      `${seller.plz} ${seller.ort}`.trim(),
+      seller.email,
+      seller.telefon && `Tel. ${seller.telefon}`,
+      seller.website?.trim(),
+    ],
     [
       seller.bank,
       seller.kontoinhaber && seller.kontoinhaber !== seller.name && `Kontoinhaber ${seller.kontoinhaber}`,

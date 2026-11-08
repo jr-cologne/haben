@@ -10,6 +10,7 @@ import {
   skontoStufenSchema,
   toElsterSteuernummer,
   SteuernummerError,
+  websiteProblem,
   type Versteuerung,
 } from "@haben/core";
 import { and, desc, eq, gte, lt, lte, min } from "drizzle-orm";
@@ -45,6 +46,15 @@ export const companySchema = z
     bundesland: z.enum(Object.keys(BUNDESLAENDER) as [keyof typeof BUNDESLAENDER, ...(keyof typeof BUNDESLAENDER)[]]).nullable(),
     versteuerung: z.enum(["ist", "soll"]),
     telefon: z.string().trim().max(40),
+    /** Fehlt = leer, damit ältere Aufrufer ohne das Feld weiter speichern können */
+    website: z
+      .string()
+      .trim()
+      .superRefine((value, ctx) => {
+        const problem = websiteProblem(value);
+        if (problem) ctx.addIssue({ code: "custom", message: problem });
+      })
+      .default(""),
     bank: z.string().trim().max(100),
     iban: z.union([
       z.literal(""),
@@ -196,7 +206,7 @@ export async function editorContext(kind: "rechnung" | "angebot") {
     listTextBlocks(),
     logoInfo(),
   ]);
-  const { name, strasse, plz, ort, email, steuernummer, ustId, iban, bic, bank, kontoinhaber } = company;
+  const { name, strasse, plz, ort, email, telefon, website, steuernummer, ustId, iban, bic, bank, kontoinhaber } = company;
   return {
     contacts,
     articles: articles.map(({ id, number, description, detail, unit, unitPrice, taxRate, priceIncludesTax }) => ({
@@ -216,6 +226,8 @@ export async function editorContext(kind: "rechnung" | "angebot") {
       plz,
       ort,
       email,
+      telefon,
+      website,
       steuernummer,
       ustId,
       iban,

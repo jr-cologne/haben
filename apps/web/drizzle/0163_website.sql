@@ -1,0 +1,1 @@
+ALTER TABLE "company" ADD COLUMN "website" text DEFAULT '' NOT NULL;

@@ -9,6 +9,7 @@ import {
   parseEuro,
   type Bundesland,
   type Rechtsform,
+  MAX_WEBSITE_LENGTH,
 } from "@haben/core";
 import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
@@ -252,6 +253,7 @@ function CompanyForm() {
           bundesland: (text("bundesland") || null) as Bundesland | null,
           versteuerung: text("versteuerung") === "soll" ? "soll" : "ist",
           telefon: text("telefon"),
+          website: text("website"),
           bank: text("bank"),
           iban: text("iban").toUpperCase().replace(/\s/g, ""),
           bic: text("bic").toUpperCase().replace(/\s/g, ""),
@@ -317,6 +319,20 @@ function CompanyForm() {
           <label className="field">
             Telefon (Pflicht für XRechnung)
             <input name="telefon" type="tel" defaultValue={company.telefon} autoComplete="tel" />
+          </label>
+        </div>
+        <div className="form-row cols-2">
+          <label className="field">
+            Website
+            <input
+              name="website"
+              type="text"
+              inputMode="url"
+              defaultValue={company.website}
+              autoComplete="url"
+              placeholder="z. B. https://example.com"
+              maxLength={MAX_WEBSITE_LENGTH}
+            />
           </label>
         </div>
       </section>

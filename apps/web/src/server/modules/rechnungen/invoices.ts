@@ -739,6 +739,7 @@ export function sellerFrom(company: Company): Seller {
     land: "DE",
     email: company.email,
     ...(company.telefon ? { telefon: company.telefon } : {}),
+    ...(company.website ? { website: company.website } : {}),
     ...(company.steuernummer ? { steuernummer: company.steuernummer } : {}),
     ...(company.ustId ? { ustId: company.ustId } : {}),
     ...(company.iban ? { iban: company.iban } : {}),
